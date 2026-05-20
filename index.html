@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Tracker | مذاكرتي</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --text: #f0f0ff;
+    --text2: #9090b0;
+    --border: #2a2a3f;
+    --card: #16161f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Space Mono', 'Tajawal', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body.ar { font-family: 'Tajawal', sans-serif; direction: rtl; }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+
+  /* NAME MODAL */
+  .name-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; backdrop-filter: blur(8px);
+  }
+  .name-modal-box {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .name-modal-emoji { font-size: 3rem; margin-bottom: 15px; display: block; }
+  .name-modal h2 { font-size: 1.3rem; margin-bottom: 8px; }
+  .name-modal p { color: var(--text2); font-size: 0.85rem; margin-bottom: 25px; }
+  .name-modal input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 12px 16px; border-radius: 10px;
+    font-family: inherit; font-size: 1rem; outline: none; margin-bottom: 15px;
+    text-align: center; transition: border-color 0.2s;
+  }
+  .name-modal input:focus { border-color: var(--accent); }
+
+  /* GREETING BANNER */
+  .greeting-banner {
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .greeting-text { font-size: 1.1rem; font-weight: 700; }
+  .greeting-sub { font-size: 0.8rem; color: var(--text2); margin-top: 3px; }
+  .score-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  .score-num { font-size: 1.4rem; font-weight: 700; font-family: 'Space Mono', monospace; display: block; }
+
+  /* HEADER */
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 0; border-bottom: 1px solid var(--border);
+    margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
+  }
+  .logo {
+    font-size: 1.4rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .header-btns { display: flex; gap: 8px; }
+  .lang-btn, .change-name-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 18px; border-radius: 20px;
+    cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.2s;
+  }
+  .lang-btn:hover, .change-name-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* COUNTDOWN */
+  .countdown-section {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 1px solid var(--accent); border-radius: 16px;
+    padding: 30px; text-align: center; margin-bottom: 25px;
+    position: relative; overflow: hidden;
+  }
+  .countdown-section::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(108,99,255,0.08) 0%, transparent 60%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; } }
+  .finals-label { font-size: 0.75rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px; position: relative; z-index: 1; }
+  .countdown-title { font-size: 1.1rem; color: var(--text2); margin-bottom: 20px; position: relative; z-index: 1; }
+  .countdown-numbers { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; position: relative; z-index: 1; }
+  .count-box { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; padding: 15px 20px; min-width: 80px; }
+  .count-num { font-size: 2.5rem; font-weight: 700; color: var(--accent); display: block; line-height: 1; font-family: 'Space Mono', monospace; }
+  .count-label { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; display: block; }
+  .date-tag { margin-top: 15px; font-size: 0.8rem; color: var(--accent3); position: relative; z-index: 1; }
+
+  /* STATS */
+  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: center; }
+  .stat-num { font-size: 2rem; font-weight: 700; font-family: 'Space Mono', monospace; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: block; }
+  .stat-label { font-size: 0.7rem; color: var(--text2); margin-top: 4px; }
+
+  /* SECTION */
+  .section-title { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* SUBJECTS */
+  .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 25px; }
+  .subject-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 15px; transition: all 0.2s; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .subject-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--subj-color, var(--accent)); }
+  .subject-card:hover { border-color: var(--subj-color, var(--accent)); transform: translateY(-2px); }
+  .subject-emoji { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+  .subject-name { font-size: 0.8rem; color: var(--text); font-weight: 700; }
+  .subject-hours { font-size: 0.7rem; color: var(--text2); margin-top: 3px; }
+  .subject-progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .subject-progress-fill { height: 100%; border-radius: 2px; background: var(--subj-color, var(--accent)); transition: width 0.5s; }
+  .subject-chapters { font-size: 0.65rem; color: var(--text2); margin-top: 4px; }
+
+  /* CHALLENGES */
+  .challenges-section { margin-bottom: 25px; }
+  .challenge-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; margin-bottom: 12px; transition: border-color 0.2s;
+  }
+  .challenge-card:hover { border-color: var(--subj-color, var(--accent)); }
+  .challenge-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .challenge-title { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .challenge-badge { font-size: 0.7rem; background: var(--surface2); border: 1px solid var(--border); padding: 3px 10px; border-radius: 10px; color: var(--text2); }
+  .challenge-badge.done { border-color: var(--accent3); color: var(--accent3); }
+  .chapters-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chapter-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text2); padding: 5px 12px; border-radius: 8px;
+    cursor: pointer; font-size: 0.72rem; font-family: inherit; transition: all 0.2s;
+  }
+  .chapter-btn.done {
+    background: var(--subj-color, var(--accent));
+    border-color: var(--subj-color, var(--accent));
+    color: white; font-weight: 700;
+  }
+  .challenge-progress { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .challenge-progress-fill { height: 100%; border-radius: 3px; background: var(--subj-color, var(--accent)); transition: width 0.5s; }
+  .reward-popup {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: flex; align-items: center; justify-content: center; z-index: 999;
+    backdrop-filter: blur(6px);
+  }
+  .reward-box {
+    background: var(--surface); border: 2px solid var(--accent3);
+    border-radius: 20px; padding: 40px; text-align: center; max-width: 380px; width: 90%;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .reward-emoji { font-size: 4rem; display: block; margin-bottom: 15px; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+  .reward-title { font-size: 1.4rem; font-weight: 700; color: var(--accent3); margin-bottom: 10px; }
+  .reward-text { color: var(--text2); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.6; }
+
+  /* TIPS */
+  .tips-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; }
+  .tip-card { background: var(--surface2); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; font-size: 0.85rem; display: flex; gap: 10px; align-items: flex-start; }
+  .tip-card:last-child { margin-bottom: 0; }
+  .tip-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+  /* LOG */
+  .log-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; }
+  .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .input-group label { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+  .input-group select, .input-group input, .input-group textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px; border-radius: 8px;
+    font-family: inherit; font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+  }
+  .input-group select:focus, .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); }
+  .input-group textarea { resize: vertical; min-height: 60px; }
+
+  .btn {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6); border: none;
+    color: white; padding: 12px 25px; border-radius: 10px; cursor: pointer;
+    font-family: inherit; font-size: 0.85rem; font-weight: 700; transition: all 0.2s; width: 100%;
+  }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-sm { padding: 8px 18px; width: auto; font-size: 0.8rem; }
+
+  /* SCHEDULE */
+  .schedule-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; }
+  .days-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .day-tab { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.75rem; font-family: inherit; transition: all 0.2s; }
+  .day-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .schedule-slots { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; min-height: 60px; }
+  .slot-item { display: flex; align-items: center; gap: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 15px; }
+  .slot-color { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .slot-info { flex: 1; }
+  .slot-subject { font-size: 0.85rem; font-weight: 700; }
+  .slot-time { font-size: 0.7rem; color: var(--text2); font-family: 'Space Mono', monospace; }
+  .slot-delete { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 1rem; padding: 2px 6px; border-radius: 4px; transition: color 0.2s; }
+  .slot-delete:hover { color: var(--accent2); }
+  .add-slot-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+  .add-slot-form .btn { width: auto; padding: 10px 18px; }
+
+  /* HISTORY */
+  .history-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; }
+  .history-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .history-item:last-child { border-bottom: none; }
+  .history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .history-info { flex: 1; }
+  .history-subject { font-size: 0.85rem; font-weight: 700; }
+  .history-meta { font-size: 0.7rem; color: var(--text2); }
+  .history-duration { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--accent3); }
+  .empty-state { text-align: center; color: var(--text2); font-size: 0.85rem; padding: 20px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--accent); color: white; padding: 12px 25px; border-radius: 25px; font-size: 0.85rem; font-weight: 700; transition: transform 0.3s ease; z-index: 999; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    .log-grid, .add-slot-form { grid-template-columns: 1fr; }
+    .add-slot-form .btn { width: 100%; }
+    .stats-bar { grid-template-columns: 1fr; }
+    .count-num { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAME MODAL -->
+<div class="name-modal" id="nameModal">
+  <div class="name-modal-box">
+    <span class="name-modal-emoji">👋</span>
+    <h2 id="modalTitle">Welcome! What's your name?</h2>
+    <p id="modalSub">So we can greet you properly every day 😄</p>
+    <input type="text" id="nameInput" placeholder="Your name..." maxlength="30">
+    <button class="btn" onclick="saveName()" id="modalBtn">Let's go! 🚀</button>
+  </div>
+</div>
+
+<!-- REWARD POPUP -->
+<div class="reward-popup" id="rewardPopup" style="display:none">
+  <div class="reward-box">
+    <span class="reward-emoji" id="rewardEmoji">🎉</span>
+    <div class="reward-title" id="rewardTitle">Challenge Complete!</div>
+    <div class="reward-text" id="rewardText"></div>
+    <button class="btn btn-sm" onclick="closeReward()" id="rewardBtn">Awesome! 💪</button>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <div class="logo" id="logo">📚 Study Tracker</div>
+    <div class="header-btns">
+      <button class="change-name-btn" onclick="changeName()" id="changeNameBtn">✏️</button>
+      <button class="lang-btn" onclick="toggleLang()" id="langBtn">العربية</button>
+    </div>
+  </header>
+
+  <!-- GREETING -->
+  <div class="greeting-banner" id="greetingBanner">
+    <div>
+      <div class="greeting-text" id="greetingText">Hey there! 👋</div>
+      <div class="greeting-sub" id="greetingSub">Ready to study?</div>
+    </div>
+    <div class="score-badge">
+      <span class="score-num" id="scoreNum">0</span>
+      <span style="font-size:0.65rem;color:var(--text2)" id="scoreLabel">Score</span>
+    </div>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div class="countdown-section">
+    <div class="finals-label" id="finalsLabel">🔥 FINALS COUNTDOWN</div>
+    <div class="countdown-title" id="countdownTitle">Time until your finals — June 21, 2026</div>
+    <div class="countdown-numbers">
+      <div class="count-box"><span class="count-num" id="days">--</span><span class="count-label" id="daysLabel">Days</span></div>
+      <div class="count-box"><span class="count-num" id="hours">--</span><span class="count-label" id="hoursLabel">Hours</span></div>
+      <div class="count-box"><span class="count-num" id="mins">--</span><span class="count-label" id="minsLabel">Minutes</span></div>
+      <div class="count-box"><span class="count-num" id="secs">--</span><span class="count-label" id="secsLabel">Seconds</span></div>
+    </div>
+    <div class="date-tag" id="dateTag">📅 21 June 2026</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-card"><span class="stat-num" id="totalHours">0</span><div class="stat-label" id="statHours">Total Hours</div></div>
+    <div class="stat-card"><span class="stat-num" id="totalSessions">0</span><div class="stat-label" id="statSessions">Sessions</div></div>
+    <div class="stat-card"><span class="stat-num" id="todayHours">0</span><div class="stat-label" id="statToday">Today</div></div>
+  </div>
+
+  <!-- SUBJECTS -->
+  <div class="section-title" id="subjectsTitle">Subjects</div>
+  <div class="subjects-grid" id="subjectsGrid"></div>
+
+  <!-- CHALLENGES -->
+  <div class="section-title" id="challengesTitle">Challenges</div>
+  <div class="challenges-section" id="challengesSection"></div>
+
+  <!-- TIPS -->
+  <div class="tips-section">
+    <div class="section-title" id="tipsTitle">Study Tips</div>
+    <div id="tipsList"></div>
+  </div>
+
+  <!-- LOG -->
+  <div class="log-section">
+    <div class="section-title" id="logTitle">Log Study Session</div>
+    <div class="log-grid">
+      <div class="input-group"><label id="subjectLabel">Subject</label><select id="sessionSubject"></select></div>
+      <div class="input-group"><label id="durationLabel">Duration (minutes)</label><input type="number" id="sessionDuration" min="1" max="480" value="60"></div>
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <label id="notesLabel">Notes (optional)</label>
+      <textarea id="sessionNotes" placeholder="..."></textarea>
+    </div>
+    <button class="btn" onclick="logSession()" id="logBtn">+ Log Session</button>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="schedule-section">
+    <div class="section-title" id="scheduleTitle">Study Schedule</div>
+    <div class="days-tabs" id="daysTabs"></div>
+    <div class="schedule-slots" id="scheduleSlots"></div>
+    <div class="add-slot-form">
+      <div class="input-group"><label id="slotSubjectLabel">Subject</label><select id="slotSubject"></select></div>
+      <div class="input-group"><label id="slotStartLabel">From</label><input type="time" id="slotStart" value="09:00"></div>
+      <div class="input-group"><label id="slotEndLabel">To</label><input type="time" id="slotEnd" value="11:00"></div>
+      <button class="btn" onclick="addSlot()" id="addSlotBtn">Add</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-section">
+    <div class="section-title" id="historyTitle">Recent Sessions</div>
+    <div id="historyList"></div>
+  </div>
+
+  <footer style="text-align:center; padding: 30px 20px; color: #9090b0; font-size: 0.75rem; position: relative; z-index:1;">
+    <div style="width: 40px; height: 1px; background: linear-gradient(90deg, transparent, #6c63ff, transparent); margin: 0 auto 15px;"></div>
+    <span id="footerText">⚡ Programmed by <span style="color:#6c63ff; font-weight:700;">Youssef El-Amir Talal</span></span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUBJECTS = [
+  { id: 'geo',  nameEn: 'Geography',  nameAr: 'جغرافيا', emoji: '🌍', color: '#43e97b',
+    chaptersEn: ['Unit 1','Unit 2','Unit 3','Unit 4'],
+    chaptersAr: ['الوحدة 1','الوحدة 2','الوحدة 3','الوحدة 4'] },
+  { id: 'hist', nameEn: 'History',    nameAr: 'تاريخ',   emoji: '📜', color: '#f7971e',
+    chaptersEn: ['Ch 1','Ch 2','Ch 3','Ch 4','Ch 5','Ch 6','Ch 7','Ch 8'],
+    chaptersAr: ['فصل 1','فصل 2','فصل 3','فصل 4','فصل 5','فصل 6','فصل 7','فصل 8'] },
+  { id: 'stat', nameEn: 'Statistics', nameAr: 'إحصاء',   emoji: '📊', color: '#6c63ff',
+    chaptersEn: ['Unit 1','Unit 2','Unit 3','Unit 4','Unit 5'],
+    chaptersAr: ['وحدة 1','وحدة 2','وحدة 3','وحدة 4','وحدة 5'] },
+  { id: 'eng',  nameEn: 'English',    nameAr: 'إنجليزي', emoji: '🇬🇧', color: '#4facfe',
+    chaptersEn: ['Unit 1','Unit 2','Unit 3','Unit 4','Unit 5','Unit 6','Unit 7','Unit 8','Unit 9','Unit 10','Unit 11','Unit 12'],
+    chaptersAr: ['وحدة 1','وحدة 2','وحدة 3','وحدة 4','وحدة 5','وحدة 6','وحدة 7','وحدة 8','وحدة 9','وحدة 10','وحدة 11','وحدة 12'] },
+  { id: 'ar',   nameEn: 'Arabic',     nameAr: 'عربي',    emoji: '📖', color: '#ff6584',
+    chaptersEn: ['Grammar','Rhetoric','Literature','Reading','Story','Texts'],
+    chaptersAr: ['نحو','بلاغة','أدب','قراءة','قصة','نصوص'] },
+];
+
+const REWARDS = {
+  geo:  { emoji: '🌍', en: "You're a Geography legend! Go treat yourself to your favorite snack — you've earned it! 🍕", ar: "أنت أسطورة الجغرافيا! روح كل أكلتك المفضلة — استحقيتها! 🍕" },
+  hist: { emoji: '📜', en: "You conquered 8 chapters of History! Take a day off from studying — you deserve a Netflix marathon! 🎬", ar: "كملت ٨ فصول تاريخ! خد إجازة من المذاكرة — تستحق نتفليكس marathon! 🎬" },
+  stat: { emoji: '📊', en: "Statistics master! Go play your favorite game for 2 hours guilt-free! 🎮", ar: "معلم الإحصاء! العب لعبتك المفضلة ساعتين بدون أي ذنب! 🎮" },
+  eng:  { emoji: '🇬🇧', en: "All 12 English units done?! You're basically fluent now. Buy yourself something nice! 🛍️", ar: "خلصت ١٢ وحدة إنجليزي؟! أنت بقيت fluent. اشتري حاجة حلوة لنفسك! 🛍️" },
+  ar:   { emoji: '📖', en: "Arabic champion! All 6 branches complete. Go brag to your friends — you've earned the bragging rights! 😎", ar: "بطل العربي! كل الفروع خلصت. روح اتفاخر على صحابك — استحقيتها! 😎" },
+};
+
+const TIPS_EN = [
+  { icon: '🍅', text: 'Use the Pomodoro technique: 25 min study, 5 min break. Your brain needs rest to absorb information.' },
+  { icon: '📵', text: 'Put your phone on "Do Not Disturb" while studying. Every notification breaks your focus for 20 minutes!' },
+  { icon: '✍️', text: 'Write notes by hand — it helps you remember 50% more than typing or just reading.' },
+  { icon: '🔄', text: 'Review what you studied yesterday before starting new material. Repetition is the key to memory.' },
+  { icon: '💧', text: 'Drink water while studying. Dehydration kills focus faster than anything else.' },
+  { icon: '🌙', text: 'Sleep 7-8 hours. Your brain consolidates everything you learned while you sleep.' },
+];
+
+const TIPS_AR = [
+  { icon: '🍅', text: 'استخدم تقنية Pomodoro: ٢٥ دقيقة مذاكرة وبعدين ٥ دقايق راحة. مخك محتاج يرتاح عشان يستوعب.' },
+  { icon: '📵', text: 'حط موبايلك على "Do Not Disturb" وانت بتذاكر. كل notification بتكسر تركيزك لمدة ٢٠ دقيقة!' },
+  { icon: '✍️', text: 'اكتب notes بإيدك — بتساعدك تحفظ ٥٠٪ أكتر من مجرد القراية أو الطباعة.' },
+  { icon: '🔄', text: 'راجع اللي ذاكرته امبارح قبل ما تبدأ حاجة جديدة. التكرار هو مفتاح الحفظ.' },
+  { icon: '💧', text: 'اشرب مية وانت بتذاكر. الجفاف بيقتل التركيز أسرع من أي حاجة تانية.' },
+  { icon: '🌙', text: 'نام ٧-٨ ساعات. مخك بيرتب كل اللي ذاكرته وانت نايم.' },
+];
+
+const DAYS_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_AR = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+let lang = localStorage.getItem('lang') || 'en';
+let userName = localStorage.getItem('userName') || '';
+let selectedDay = new Date().getDay();
+let sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+let schedule = JSON.parse(localStorage.getItem('schedule') || '[]');
+let challenges = JSON.parse(localStorage.getItem('challenges') || '{}');
+
+function t(en, ar) { return lang === 'ar' ? ar : en; }
+
+// NAME
+function saveName() {
+  const val = document.getElementById('nameInput').value.trim();
+  if (!val) return;
+  userName = val;
+  localStorage.setItem('userName', userName);
+  document.getElementById('nameModal').style.display = 'none';
+  render();
+}
+function changeName() {
+  document.getElementById('nameInput').value = userName;
+  document.getElementById('nameModal').style.display = 'flex';
+}
+document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (lang === 'ar') {
+    if (h < 12) return 'صباح النور';
+    if (h < 17) return 'مسا الخير';
+    return 'مساء النور';
+  } else {
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+}
+
+function getScoreComment(score) {
+  if (lang === 'ar') {
+    if (score === 0) return 'ابدأ المذاكرة عشان يرتفع الـ score! 💪';
+    if (score < 10) return 'كمل، انت على الطريق الصح! 📈';
+    if (score < 30) return 'أداء كويس! استمر! 🔥';
+    if (score < 60) return 'ممتاز! انت بتذاكر زي المحترفين! ⭐';
+    return 'أسطورة! انت على استعداد تام للامتحانات! 🏆';
+  } else {
+    if (score === 0) return 'Start studying to build your score! 💪';
+    if (score < 10) return 'Keep going, you\'re on track! 📈';
+    if (score < 30) return 'Good progress! Keep it up! 🔥';
+    if (score < 60) return 'Excellent! Studying like a pro! ⭐';
+    return 'Legend! You\'re fully ready for finals! 🏆';
+  }
+}
+
+function getLowScoreRoast(name) {
+  const roastsEn = [
+    `Come on ${name}! The exam won't study itself! 😤`,
+    `${name}, فاضل شهر — يعني مش وقت كسل! 😂`,
+    `Bro ${name}, the books are gathering dust! Open one! 📚`,
+  ];
+  const roastsAr = [
+    `يلا يا ${name}! الامتحان مش هيذاكر نفسه! 😤`,
+    `يا ${name}، فاضل شهر — مش وقت كسل! 😂`,
+    `أيوه يا علق يا ${name}! افتح الكتاب بقى! 📚`,
+  ];
+  const arr = lang === 'ar' ? roastsAr : roastsEn;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function calcScore() {
+  const totalMins = sessions.reduce((a, b) => a + b.duration, 0);
+  const chaptersDone = Object.values(challenges).reduce((a, arr) => a + arr.length, 0);
+  return Math.floor(totalMins / 10) + chaptersDone * 5;
+}
+
+function toggleLang() {
+  lang = lang === 'en' ? 'ar' : 'en';
+  localStorage.setItem('lang', lang);
+  document.documentElement.lang = lang;
+  document.body.classList.toggle('ar', lang === 'ar');
+  render();
+}
+
+function render() {
+  document.getElementById('langBtn').textContent = lang === 'ar' ? 'English' : 'العربية';
+  document.getElementById('logo').textContent = t('📚 Study Tracker', '📚 متابعة المذاكرة');
+
+  // Modal
+  document.getElementById('modalTitle').textContent = t('Welcome! What\'s your name?', 'أهلاً! إيه اسمك؟');
+  document.getElementById('modalSub').textContent = t('So we can greet you properly every day 😄', 'عشان نسلم عليك صح كل يوم 😄');
+  document.getElementById('modalBtn').textContent = t("Let's go! 🚀", 'يلا! 🚀');
+  document.getElementById('nameInput').placeholder = t('Your name...', 'اسمك...');
+
+  // Show modal if no name
+  if (!userName) {
+    document.getElementById('nameModal').style.display = 'flex';
+  } else {
+    document.getElementById('nameModal').style.display = 'none';
+  }
+
+  // Greeting
+  const score = calcScore();
+  const greeting = getGreeting();
+  document.getElementById('greetingText').textContent = `${greeting}, ${userName || t('friend','صديقي')}! 👋`;
+  document.getElementById('greetingSub').textContent = score < 5 && sessions.length > 0
+    ? getLowScoreRoast(userName)
+    : getScoreComment(score);
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreLabel').textContent = t('Score', 'نقاط');
+
+  // Countdown
+  document.getElementById('finalsLabel').textContent = t('🔥 FINALS COUNTDOWN', '🔥 العد التنازلي للامتحانات');
+  document.getElementById('countdownTitle').textContent = t('Time until your finals — June 21, 2026', 'الوقت المتبقي للامتحانات — ٢١ يونيو ٢٠٢٦');
+  document.getElementById('daysLabel').textContent = t('Days', 'يوم');
+  document.getElementById('hoursLabel').textContent = t('Hours', 'ساعة');
+  document.getElementById('minsLabel').textContent = t('Minutes', 'دقيقة');
+  document.getElementById('secsLabel').textContent = t('Seconds', 'ثانية');
+  document.getElementById('dateTag').textContent = t('📅 21 June 2026', '📅 ٢١ يونيو ٢٠٢٦');
+
+  // Stats
+  document.getElementById('statHours').textContent = t('Total Hours', 'إجمالي الساعات');
+  document.getElementById('statSessions').textContent = t('Sessions', 'جلسات');
+  document.getElementById('statToday').textContent = t("Today's Hours", 'ساعات اليوم');
+
+  // Sections
+  document.getElementById('subjectsTitle').textContent = t('Subjects', 'المواد');
+  document.getElementById('challengesTitle').textContent = t('Challenges 🏆', 'التحديات 🏆');
+  document.getElementById('tipsTitle').textContent = t('Study Tips 💡', 'نصايح للمذاكرة 💡');
+  document.getElementById('logTitle').textContent = t('Log Study Session', 'سجّل جلسة مذاكرة');
+  document.getElementById('subjectLabel').textContent = t('Subject', 'المادة');
+  document.getElementById('durationLabel').textContent = t('Duration (minutes)', 'المدة (دقائق)');
+  document.getElementById('notesLabel').textContent = t('Notes (optional)', 'ملاحظات (اختياري)');
+  document.getElementById('logBtn').textContent = t('+ Log Session', '+ سجّل الجلسة');
+  document.getElementById('scheduleTitle').textContent = t('Study Schedule', 'جدول المذاكرة');
+  document.getElementById('slotSubjectLabel').textContent = t('Subject', 'المادة');
+  document.getElementById('slotStartLabel').textContent = t('From', 'من');
+  document.getElementById('slotEndLabel').textContent = t('To', 'إلى');
+  document.getElementById('addSlotBtn').textContent = t('Add', 'إضافة');
+  document.getElementById('historyTitle').textContent = t('Recent Sessions', 'الجلسات الأخيرة');
+  document.getElementById('changeNameBtn').title = t('Change name', 'غير الاسم');
+  document.getElementById('footerText').innerHTML = lang === 'ar'
+    ? '⚡ بواسطة <span style="color:#6c63ff; font-weight:700;">يوسف الأمير طلال</span>'
+    : '⚡ Programmed by <span style="color:#6c63ff; font-weight:700;">Youssef El-Amir Talal</span>';
+
+  renderSubjects();
+  renderChallenges();
+  renderTips();
+  renderSelects();
+  renderDays();
+  renderSchedule();
+  renderHistory();
+  renderStats();
+}
+
+function renderSubjects() {
+  const grid = document.getElementById('subjectsGrid');
+  grid.innerHTML = SUBJECTS.map(s => {
+    const done = (challenges[s.id] || []).length;
+    const total = s.chaptersEn.length;
+    const pct = total > 0 ? (done / total) * 100 : 0;
+    return `
+      <div class="subject-card" style="--subj-color:${s.color}">
+        <span class="subject-emoji">${s.emoji}</span>
+        <div class="subject-name">${t(s.nameEn, s.nameAr)}</div>
+        <div class="subject-hours">${getSubjectHours(s.id)}h ${t('studied', 'مذاكرة')}</div>
+        <div class="subject-progress-bar"><div class="subject-progress-fill" style="width:${pct}%;background:${s.color}"></div></div>
+        <div class="subject-chapters">${done}/${total} ${t('done','مكتمل')}</div>
+      </div>`;
+  }).join('');
+}
+
+function getSubjectHours(id) {
+  const total = sessions.filter(s => s.subjectId === id).reduce((a, b) => a + b.duration, 0);
+  return (total / 60).toFixed(1);
+}
+
+function renderChallenges() {
+  const section = document.getElementById('challengesSection');
+  section.innerHTML = SUBJECTS.map(s => {
+    const done = challenges[s.id] || [];
+    const chapters = lang === 'ar' ? s.chaptersAr : s.chaptersEn;
+    const allDone = done.length === chapters.length;
+    const pct = chapters.length > 0 ? (done.length / chapters.length) * 100 : 0;
+    return `
+      <div class="challenge-card" style="--subj-color:${s.color}">
+        <div class="challenge-header">
+          <div class="challenge-title">${s.emoji} ${t(s.nameEn, s.nameAr)} ${t('Challenge','تحدي')}</div>
+          <div class="challenge-badge ${allDone ? 'done' : ''}">${allDone ? '✅ ' + t('Complete!','مكتمل!') : done.length + '/' + chapters.length}</div>
+        </div>
+        <div class="chapters-grid">
+          ${chapters.map((ch, i) => `
+            <button class="chapter-btn ${done.includes(i) ? 'done' : ''}" 
+              style="${done.includes(i) ? '--subj-color:' + s.color : ''}"
+              onclick="toggleChapter('${s.id}', ${i}, '${s.color}')">
+              ${done.includes(i) ? '✓ ' : ''}${ch}
+            </button>`).join('')}
+        </div>
+        <div class="challenge-progress">
+          <div class="challenge-progress-fill" style="width:${pct}%;background:${s.color}"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleChapter(subjId, idx, color) {
+  if (!challenges[subjId]) challenges[subjId] = [];
+  const subj = SUBJECTS.find(s => s.id === subjId);
+  const wasComplete = challenges[subjId].length === subj.chaptersEn.length;
+
+  if (challenges[subjId].includes(idx)) {
+    challenges[subjId] = challenges[subjId].filter(i => i !== idx);
+  } else {
+    challenges[subjId].push(idx);
+    // Check if just completed all
+    if (!wasComplete && challenges[subjId].length === subj.chaptersEn.length) {
+      showReward(subjId);
+    }
+  }
+  localStorage.setItem('challenges', JSON.stringify(challenges));
+  renderChallenges();
+  renderSubjects();
+  renderStats();
+  document.getElementById('scoreNum').textContent = calcScore();
+}
+
+function showReward(subjId) {
+  const r = REWARDS[subjId];
+  const subj = SUBJECTS.find(s => s.id === subjId);
+  document.getElementById('rewardEmoji').textContent = r.emoji;
+  document.getElementById('rewardTitle').textContent = t(`🎉 ${subj.nameEn} Complete!`, `🎉 أتمت ${subj.nameAr}!`);
+  document.getElementById('rewardText').textContent = t(r.en, r.ar);
+  document.getElementById('rewardBtn').textContent = t('Awesome! 💪', 'رائع! 💪');
+  document.getElementById('rewardPopup').style.display = 'flex';
+}
+
+function closeReward() {
+  document.getElementById('rewardPopup').style.display = 'none';
+}
+
+function renderTips() {
+  const tips = lang === 'ar' ? TIPS_AR : TIPS_EN;
+  document.getElementById('tipsList').innerHTML = tips.map(tip => `
+    <div class="tip-card">
+      <span class="tip-icon">${tip.icon}</span>
+      <span>${tip.text}</span>
+    </div>`).join('');
+}
+
+function renderSelects() {
+  const opts = SUBJECTS.map(s => `<option value="${s.id}">${s.emoji} ${t(s.nameEn, s.nameAr)}</option>`).join('');
+  document.getElementById('sessionSubject').innerHTML = opts;
+  document.getElementById('slotSubject').innerHTML = opts;
+}
+
+function renderDays() {
+  const days = lang === 'ar' ? DAYS_AR : DAYS_EN;
+  document.getElementById('daysTabs').innerHTML = days.map((d, i) => `
+    <button class="day-tab ${i === selectedDay ? 'active' : ''}" onclick="selectDay(${i})">${d.slice(0,3)}</button>`).join('');
+}
+
+function selectDay(i) { selectedDay = i; renderDays(); renderSchedule(); }
+
+function renderSchedule() {
+  const slots = schedule.filter(s => s.day === selectedDay);
+  const container = document.getElementById('scheduleSlots');
+  if (!slots.length) { container.innerHTML = `<div class="empty-state">${t('No sessions scheduled for this day', 'لا توجد جلسات لهذا اليوم')}</div>`; return; }
+  container.innerHTML = slots.sort((a,b) => a.start.localeCompare(b.start)).map(slot => {
+    const subj = SUBJECTS.find(s => s.id === slot.subjectId);
+    return `<div class="slot-item">
+      <div class="slot-color" style="background:${subj?.color}"></div>
+      <div class="slot-info">
+        <div class="slot-subject">${subj?.emoji} ${t(subj?.nameEn, subj?.nameAr)}</div>
+        <div class="slot-time">${slot.start} → ${slot.end}</div>
+      </div>
+      <button class="slot-delete" onclick="deleteSlot(${slot.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function addSlot() {
+  const subjectId = document.getElementById('slotSubject').value;
+  const start = document.getElementById('slotStart').value;
+  const end = document.getElementById('slotEnd').value;
+  if (!start || !end || start >= end) { showToast(t('Check the time! ⏰', 'تحقق من الوقت! ⏰')); return; }
+  schedule.push({ id: Date.now(), day: selectedDay, subjectId, start, end });
+  localStorage.setItem('schedule', JSON.stringify(schedule));
+  renderSchedule();
+  showToast(t('Added! 📅', 'تمت الإضافة! 📅'));
+}
+
+function deleteSlot(id) {
+  schedule = schedule.filter(s => s.id !== id);
+  localStorage.setItem('schedule', JSON.stringify(schedule));
+  renderSchedule();
+}
+
+function logSession() {
+  const subjectId = document.getElementById('sessionSubject').value;
+  const duration = parseInt(document.getElementById('sessionDuration').value);
+  const notes = document.getElementById('sessionNotes').value;
+  if (!duration || duration < 1) { showToast(t('Enter valid duration!', 'أدخل مدة صحيحة!')); return; }
+  sessions.unshift({ id: Date.now(), subjectId, duration, notes, date: new Date().toISOString() });
+  localStorage.setItem('sessions', JSON.stringify(sessions));
+  document.getElementById('sessionNotes').value = '';
+  document.getElementById('sessionDuration').value = '60';
+  renderHistory(); renderStats(); renderSubjects();
+  document.getElementById('scoreNum').textContent = calcScore();
+  document.getElementById('greetingSub').textContent = getScoreComment(calcScore());
+  showToast(t('Session logged! 🔥', 'تم التسجيل! 🔥'));
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!sessions.length) { list.innerHTML = `<div class="empty-state">${t('No sessions yet. Start studying! 💪', 'لا توجد جلسات بعد. ابدأ المذاكرة! 💪')}</div>`; return; }
+  list.innerHTML = sessions.slice(0,10).map(s => {
+    const subj = SUBJECTS.find(x => x.id === s.subjectId);
+    const dateStr = new Date(s.date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' });
+    return `<div class="history-item">
+      <div class="history-dot" style="background:${subj?.color}"></div>
+      <div class="history-info">
+        <div class="history-subject">${subj?.emoji} ${t(subj?.nameEn, subj?.nameAr)}</div>
+        <div class="history-meta">${dateStr}${s.notes ? ' · ' + s.notes : ''}</div>
+      </div>
+      <div class="history-duration">${s.duration}m</div>
+    </div>`;
+  }).join('');
+}
+
+function renderStats() {
+  const total = sessions.reduce((a, b) => a + b.duration, 0);
+  document.getElementById('totalHours').textContent = (total / 60).toFixed(1);
+  document.getElementById('totalSessions').textContent = sessions.length;
+  const today = new Date().toDateString();
+  const todayMins = sessions.filter(s => new Date(s.date).toDateString() === today).reduce((a, b) => a + b.duration, 0);
+  document.getElementById('todayHours').textContent = (todayMins / 60).toFixed(1);
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function updateCountdown() {
+  const diff = new Date('2026-06-21T00:00:00') - new Date();
+  if (diff <= 0) { ['days','hours','mins','secs'].forEach(id => document.getElementById(id).textContent = '0'); return; }
+  document.getElementById('days').textContent = String(Math.floor(diff / 86400000)).padStart(2,'0');
+  document.getElementById('hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,'0');
+  document.getElementById('mins').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0');
+  document.getElementById('secs').textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2,'0');
+}
+
+// INIT
+document.body.classList.toggle('ar', lang === 'ar');
+render();
+updateCountdown();
+setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>
